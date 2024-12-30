@@ -201,6 +201,7 @@ func (r *Raft) runFollower() {
 			c.respond(nil)
 
 		case b := <-r.bootstrapCh:
+			fmt.Printf("run follower\n")
 			r.mainThreadSaturation.working()
 			b.respond(r.liveBootstrap(b.configuration))
 
@@ -414,6 +415,7 @@ func (r *Raft) runCandidate() {
 			c.respond(nil)
 
 		case b := <-r.bootstrapCh:
+			fmt.Printf("run candidate\n")
 			r.mainThreadSaturation.working()
 			b.respond(ErrCantBootstrap)
 
@@ -899,6 +901,7 @@ func (r *Raft) leaderLoop() {
 			r.appendConfigurationEntry(future)
 
 		case b := <-r.bootstrapCh:
+			fmt.Printf("run leader\n")
 			r.mainThreadSaturation.working()
 			b.respond(ErrCantBootstrap)
 
