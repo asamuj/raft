@@ -69,25 +69,23 @@ func main() {
 	leaderNode := findLeader(nodes)
 
 	ss := make(chan struct{}, 100000)
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < 1000000000; i++ {
 		ss <- struct{}{}
 		go func() {
 			defer func() {
 				<-ss
 			}()
-			if i%100000 == 0 {
-				fmt.Printf("put batch: %d\n", i)
-			}
 
 			if err := leaderNode.Put(fmt.Sprintf("key-%d", i), fmt.Sprintf("value-%d", i)); err != nil {
-				fmt.Printf("Error: %v\n", err)
+				// fmt.Printf("Error: %v\n", err)
 				return
 			}
 		}()
 	}
 
+	time.Sleep(30 * time.Second)
 	f := func() {
-		for i := 100; i < 10000; i++ {
+		for i := 0; i < 10; i++ {
 			value, err := nodes[2].Get(fmt.Sprintf("key-%d", i))
 			if err != nil {
 				fmt.Printf("Error: %v\n", err)
@@ -117,3 +115,14 @@ func findLeader(nodes []*node.Node) *node.Node {
 		time.Sleep(10 * time.Second)
 	}
 }
+
+// 2024/12/30 13:47:17 INFO applySet "bind addr"=127.0.0.1:8081 "set key"=key-0 value=value-0 timestamp=1735537637824
+// 2024/12/30 13:47:18 INFO Put addr=127.0.0.1:8081 key=key-100000 value=value-100000 timestamp=1735537638846
+// 2024/12/30 13:47:32 INFO Put addr=127.0.0.1:8081 key=key-200000 value=value-200000 timestamp=1735537652510
+// 2024/12/30 13:47:46 INFO applySet "bind addr"=127.0.0.1:8081 "set key"=key-200000 value=value-200000 timestamp=1735537666333
+// 2024/12/30 13:47:46 INFO Put addr=127.0.0.1:8081 key=key-300000 value=value-300000 timestamp=1735537666333
+// 2024/12/30 13:48:00 INFO Put addr=127.0.0.1:8081 key=key-400000 value=value-400000 timestamp=1735537680206
+// 2024/12/30 13:48:02 INFO applySet "bind addr"=127.0.0.1:8081 "set key"=key-300000 value=value-300000 timestamp=1735537682448
+// 2024/12/30 13:48:15 INFO Put addr=127.0.0.1:8081 key=key-500000 value=value-500000 timestamp=1735537695845
+
+// 1735537666333-1735537652510

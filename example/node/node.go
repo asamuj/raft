@@ -3,9 +3,12 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cockroachdb/pebble"
@@ -37,7 +40,7 @@ type Config struct {
 
 const (
 	retainSnapshotCount = 100
-	raftTimeout         = 10 * time.Second
+	raftTimeout         = 20 * time.Second
 )
 
 func NewNode(localID, raftBind, raftDir, metaDir string) (*Node, error) {
@@ -168,6 +171,18 @@ func (n *Node) Put(key, value string) error {
 	b, err := json.Marshal(c)
 	if err != nil {
 		return err
+	}
+
+	parts := strings.Split(key, "-")
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid key: %s", key)
+	}
+
+	id, _ := strconv.Atoi(parts[1])
+	if id%100000 == 0 {
+		if n.bindAddr == "127.0.0.1:8081" {
+			slog.Info("Put", "addr", n.bindAddr, "key", key, "value", value, "timestamp", time.Now().UnixMilli())
+		}
 	}
 
 	return n.raft.Apply(b, raftTimeout).Error()

@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/cockroachdb/pebble"
 	"github.com/hashicorp/raft"
@@ -37,7 +41,21 @@ func (f *fsm) Apply(log *raft.Log) interface{} {
 }
 
 func (f *fsm) applySet(key, value string) error {
-	fmt.Printf("bind addr: %s, set key: %s value: %s\n", f.addr, key, value)
+	// fmt.Printf("bind addr: %s, set key: %s value: %s\n", f.addr, key, value)
+
+	parts := strings.Split(key, "-")
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid key: %s", key)
+	}
+
+	id, _ := strconv.Atoi(parts[1])
+	if id%100000 == 0 {
+		if f.addr == "127.0.0.1:8081" {
+			slog.Info("applySet", "bind addr", f.addr, "set key", key, "value", value, "timestamp", time.Now().UnixMilli())
+		}
+
+	}
+
 	return f.db.Set([]byte(key), []byte(value), nil)
 }
 
